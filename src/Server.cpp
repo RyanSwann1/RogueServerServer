@@ -2,7 +2,37 @@
 #include "Client.h"
 #include <iostream>
 
+constexpr int TOTAL_CLIENTS_ALLOWED = 6;
+
+//const sf::IpAddress m_ipAddress;
+//const unsigned short m_portNumber;
+//const int m_totalClientsAllowed;
+//Level m_currentLevel;
+//std::deque<ServerMessage> m_messageQueue;
+//std::list<std::pair<int, std::thread>> m_clientThreads;
+//std::thread m_listenThread;
+//std::mutex m_listenThreadMutex;
+//int m_totalClients;
+//std::list<Client*> m_clients;
+//sf::UdpSocket m_udpSocket;
+//sf::TcpListener m_tcpListener;
+//sf::SocketSelector m_socketSelector;
+//bool m_running;
+
 Server::Server(sf::IpAddress ipAddress, unsigned short portNumber)
+	: m_ipAddress(ipAddress),
+	m_portNumber(portNumber),
+	m_totalClientsAllowed(TOTAL_CLIENTS_ALLOWED),
+	m_messageQueue(),
+	m_clientThreads(),
+	m_listenThread(),
+	m_listenThreadMutex(),
+	m_totalClients(0),
+	m_clients(),
+	m_udpSocket(),
+	m_tcpListener(),
+	m_socketSelector(),
+	m_running(true)
 {
 	if (m_tcpListener.listen(m_portNumber, m_ipAddress) != sf::Socket::Done)
 	{
@@ -87,6 +117,20 @@ void Server::addClient()
 	sf::TcpSocket* socket = new sf::TcpSocket();
 	if (m_tcpListener.accept(*socket) == sf::Socket::Done)
 	{
+		//Game is full - disallow connection
+		if (getNumberOfClients() == m_totalClientsAllowed)
+		{
+			socket->connect(m_ipAddress, m_portNumber);
+			sf::Packet packet;
+			packet << static_cast<int>(PacketType::Disconnect);
+			socket->send(packet);
+
+			//TODO: This might be dangerous
+			//Could delete before the message has been sent out 
+			delete socket;
+			return;
+		}
+
 		socket->connect(m_ipAddress, m_portNumber);
 		m_listenThreadMutex.lock();
 		m_socketSelector.add(*socket); 
@@ -102,7 +146,7 @@ void Server::addClient()
 		m_listenThreadMutex.lock();
 		//Client(std::deque<ServerMessage>& serverQueue, sf::SocketSelector& socketSelector, sf::TcpSocket& tcpSocket,
 		//	const sf::IpAddress& serverIPAddress, unsigned short serverPortNumber);
-		Client* client = new Client(m_messageQueue, m_socketSelector, *socket, m_ipAddress, m_portNumber);
+		//Client* client = new Client(m_messageQueue, m_socketSelector, *socket, m_ipAddress, m_portNumber);
 
 			//*socket, m_totalClients, m_ipAddress, m_portNumber, m_messageQueue, m_socketSelector);
 		m_clientThreads.push_back(std::make_pair(m_totalClients, std::thread(&Client::listen, *client)));
@@ -138,4 +182,9 @@ void Server::updatePlayerPosition(int clientID, sf::Vector2f newPosition)
 	sf::Packet packet;
 	packet << clientID << static_cast<int>(PacketType::PlayerPosition) << newPosition.x << newPosition.y;
 	broadcastUDPMessage(packet);
+}
+
+int Server::getNumberOfClients() const
+{
+	return static_cast<int>(m_clients.size());
 }

@@ -24,7 +24,7 @@ public:
 private:
 	const sf::IpAddress m_ipAddress;
 	const unsigned short m_portNumber;
-	Level m_currentLevel;
+	const int m_totalClientsAllowed;
 	std::deque<ServerMessage> m_messageQueue;
 	std::list<std::pair<int, std::thread>> m_clientThreads;
 	std::thread m_listenThread;
@@ -41,4 +41,6 @@ private:
 	void addClient();
 	void listen();
 	void updatePlayerPosition(int clientID, sf::Vector2f newPosition);
+
+	int getNumberOfClients() const;
 };
