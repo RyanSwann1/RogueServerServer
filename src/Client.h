@@ -8,28 +8,19 @@
 
 constexpr int INVALID_CLIENT_ID = -1;
 
-struct ServerMessage
-{
-	ServerMessage(int clientID, PacketType packetType, sf::Vector2f position = sf::Vector2f())
-		: m_clientID(clientID),
-		m_packetType(packetType),
-		m_position(position)
-	{}
-
-	int m_clientID;
-	PacketType m_packetType;
-	sf::Vector2f m_position;
-};
-
 class Client
 {
 public:
 	Client(std::deque<ServerMessage>& serverQueue, sf::SocketSelector& socketSelector, sf::TcpSocket& tcpSocket,
 		const sf::IpAddress& serverIPAddress, unsigned short serverPortNumber);
 
+	bool isActive() const;
+	bool waitingForHeartbeat() const;
+	bool waitingForSecondHeartbeat() const;
 	int getID() const;
 	sf::TcpSocket& getTCPSocket();
 
+	void waitForHeartbeat();
 	void listen();
 
 private:
@@ -41,4 +32,6 @@ private:
 	sf::IpAddress m_serverIPAddress;
 	unsigned short m_serverPortNumber;
 	int m_ID;
+	bool m_waitingForHearbeat;
+	bool m_waitingForSecondHeartbeat;
 };

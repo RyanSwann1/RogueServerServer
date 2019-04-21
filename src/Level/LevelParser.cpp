@@ -4,10 +4,8 @@
 #include "Level/Level.h"
 #include <assert.h>
 
-std::vector<TileLayer> parseTileLayers(const TiXmlElement& rootElement, const LevelDetails& levelDetails);
 LevelDetails parseLevelDetails(const TiXmlElement& rootElement);
 std::vector<std::vector<int>> decodeTileLayer(const TiXmlElement & tileLayerElement, sf::Vector2i levelSize);
-std::unordered_map<std::string, TileSheet> parseTileSheets(const TiXmlElement& rootElement);
 std::vector<sf::Vector2f> parseEntities(const TiXmlElement & rootElement, int tileSize);
 std::vector<sf::FloatRect> parseCollisionLayer(const TiXmlElement & rootElement, int tileSize);
 
@@ -83,31 +81,6 @@ std::vector<sf::Vector2f> parseEntities(const TiXmlElement & rootElement, int ti
 	return entityStartingPositions;
 }
 
-std::unordered_map<std::string, TileSheet> parseTileSheets(const TiXmlElement& rootElement)
-{
-	std::unordered_map<std::string, TileSheet> tileSheets;
-	for (const auto* tileSheetElement = rootElement.FirstChildElement();
-		tileSheetElement != nullptr; tileSheetElement = tileSheetElement->NextSiblingElement())
-	{
-		if (tileSheetElement->Value() != std::string("tileset"))
-		{
-			continue;
-		}
-
-		std::string name = tileSheetElement->Attribute("name");
-		std::string source =  tileSheetElement->FirstChildElement()->Attribute("source");
-		sf::Vector2i size;
-		int tileSize = 0;
-		tileSheetElement->FirstChildElement()->Attribute("width", &size.x);
-		tileSheetElement->FirstChildElement()->Attribute("height", &size.y);
-		tileSheetElement->Attribute("tilewidth", &tileSize);
-		int columns = size.x / tileSize;
-		tileSheets.emplace(name, TileSheet( source, tileSize, columns ));
-	}
-
-	assert(!tileSheets.empty());
-	return tileSheets;
-}
 
 std::vector<std::vector<int>> decodeTileLayer(const TiXmlElement & tileLayerElement, sf::Vector2i levelSize)
 {
@@ -155,24 +128,4 @@ LevelDetails parseLevelDetails(const TiXmlElement& rootElement)
 	rootElement.Attribute("height", &levelSize.y);
 	rootElement.Attribute("tilewidth", &tileSize);
 	return LevelDetails(levelSize, tileSize);
-}
-
-std::vector<TileLayer> parseTileLayers(const TiXmlElement & rootElement, const LevelDetails& levelDetails)
-{
-	std::vector<TileLayer> tileLayers;
-	for (const auto* tileLayerElement = rootElement.FirstChildElement(); 
-		tileLayerElement != nullptr; tileLayerElement = tileLayerElement->NextSiblingElement())
-	{
-		if (tileLayerElement->Value() != std::string("layer"))
-		{
-			continue;
-		}
-
-		auto tileMap = decodeTileLayer(*tileLayerElement, levelDetails.m_size);
-		std::string name = tileLayerElement->Attribute("name");
-		tileLayers.emplace_back(std::move(tileMap), name);
-	}
-
-	assert(!tileLayers.empty());
-	return tileLayers;
 }

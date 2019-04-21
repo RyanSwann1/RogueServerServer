@@ -1,12 +1,6 @@
 #include <SFML/Graphics.hpp>
-#include <SFML/Network.hpp>
 #include <iostream>
-#include <vector>
-#include <memory>
-#include <list>
-#include <thread>
-#include <deque>
-#include <mutex>
+#include "Server.h"
 
 //class MyClass {
 //private:
@@ -57,13 +51,6 @@
 //stores for a bit
 //spits out when neccessary
 
-enum class PacketType
-{
-	Connect = 0,
-	Disconnect,
-	PlayerPosition
-};
-
 std::string IP_ADDRESS = "192.168.0.14";
 int PORT_NUMBER = 5030;
 sf::IpAddress ip("192.168.0.14");
@@ -84,7 +71,6 @@ constexpr int INVALID_CLIENT_ID = -1;
 //
 //	void listen()
 //	{
-
 //	}
 //
 //	std::mutex m_mutex;
@@ -96,7 +82,6 @@ constexpr int INVALID_CLIENT_ID = -1;
 //	std::deque<std::pair<PacketType, int>>& m_serverQueue;
 //	sf::SocketSelector m_socketSelector;
 //};
-
 //class Server
 //{
 //public:
@@ -274,44 +259,16 @@ constexpr int INVALID_CLIENT_ID = -1;
 
 int main()
 {
+	sf::Clock clock;
 	Server server("192.168.0.14", 5030);
-	server.m_listenThread = std::thread(&Server::listen, &server);
+	server.beginListenThread();
 	while (server.isRunning())
 	{
-		server.update();
+		server.update(clock.restart());
 	}
 
 	return 0;
 }
-
-//
-//if (socketSelector.isReady(server.m_udpSocket))
-//{
-//	sf::Packet packet;
-//	int packetType = 0;
-//	if (server.m_udpSocket.receive(packet, server.m_ipAddress, server.m_portNumber) == sf::Socket::Done)
-//	{
-//		packet >> packetType;
-//		if (static_cast<PacketType>(packetType) == PacketType::Connect)
-//		{
-//			packet.clear();
-//			packet << static_cast<int>(PacketType::Connect) << server.m_totalClients;
-//			if (server.m_udpSocket.send(packet, server.m_ipAddress, server.m_portNumber) == sf::Socket::Done)
-//			{
-//				server.addClient();
-//			}
-//		}
-//		else if (static_cast<PacketType>(packetType) == PacketType::Disconnect)
-//		{
-//			int clientID = INVALID_CLIENT_ID;
-//			packet >> packetType >> clientID;
-//			if (clientID == INVALID_CLIENT_ID)
-//			{
-//				int i = 0;
-//			}
-//		}
-//	}
-//}
 
 //#include <SFML/Graphics.hpp>
 //#include <SFML/Network.hpp>

@@ -3,21 +3,7 @@
 #include <iostream>
 
 constexpr int TOTAL_CLIENTS_ALLOWED = 6;
-
-//const sf::IpAddress m_ipAddress;
-//const unsigned short m_portNumber;
-//const int m_totalClientsAllowed;
-//Level m_currentLevel;
-//std::deque<ServerMessage> m_messageQueue;
-//std::list<std::pair<int, std::thread>> m_clientThreads;
-//std::thread m_listenThread;
-//std::mutex m_listenThreadMutex;
-//int m_totalClients;
-//std::list<Client*> m_clients;
-//sf::UdpSocket m_udpSocket;
-//sf::TcpListener m_tcpListener;
-//sf::SocketSelector m_socketSelector;
-//bool m_running;
+constexpr int HEARTBEAT_INTERVAL = 10000;
 
 Server::Server(sf::IpAddress ipAddress, unsigned short portNumber)
 	: m_ipAddress(ipAddress),
@@ -49,28 +35,49 @@ Server::Server(sf::IpAddress ipAddress, unsigned short portNumber)
 	std::cout << "Server Successfully Started\n";
 }
 
-void Server::update()
+Server::~Server()
 {
-	if (m_messageQueue.empty())
-	{
-		return;
-	}
+	m_listenThread.join();
+}
 
-	for (const auto& message : m_messageQueue)
+bool Server::isRunning() const
+{
+	return m_running;
+}
+
+void Server::beginListenThread()
+{
+	m_listenThread = std::thread(&Server::listen, this);
+}
+
+void Server::update(const sf::Time& time)
+{
+	handleMessageQueue();
+
+	m_serverTime += time;
+	
+	if (m_serverTime.asMilliseconds() >= HEARTBEAT_INTERVAL)
 	{
-		switch (message.m_packetType)
+		for (auto& client : m_clients)
 		{
-		case PacketType::Disconnect:
-			disconnectClient(message.m_clientID);
-			break;
+			if (!client->waitingForHeartbeat())
+			{
+				client.,
+			}
 
-		case PacketType::PlayerPosition:
-			updatePlayerPosition(message.m_clientID, message.m_position);
-			break;
+			//Allow for client to attempt connection 
+			if (client->waitingForHeartbeat())
+			{
+				continue;
+			}
+			//Client Not responding to server for second heartbeat
+			//Disconnect client from server
+			if (client->waitingForSecondHeartbeat())
+			{
+				addServerMessage(ServerMessage(client->getID(), PacketType::Disconnect));
+			}
 		}
 	}
-
-	m_messageQueue.clear();	
 }
 
 void Server::disconnectClient(int clientID)
@@ -91,7 +98,7 @@ void Server::disconnectClient(int clientID)
 			m_clientThreads.erase(activeClientThread);
 		}
 
-		m_currentLevel.removePlayer(clientID);
+		//m_currentLevel.removePlayer(clientID);
 		m_clients.erase(iter);
 
 		//Inform other clients on disconnection
@@ -146,10 +153,10 @@ void Server::addClient()
 		m_listenThreadMutex.lock();
 		//Client(std::deque<ServerMessage>& serverQueue, sf::SocketSelector& socketSelector, sf::TcpSocket& tcpSocket,
 		//	const sf::IpAddress& serverIPAddress, unsigned short serverPortNumber);
-		//Client* client = new Client(m_messageQueue, m_socketSelector, *socket, m_ipAddress, m_portNumber);
+		Client* client = new Client(m_messageQueue, m_socketSelector, *socket, m_ipAddress, m_portNumber);
 
 			//*socket, m_totalClients, m_ipAddress, m_portNumber, m_messageQueue, m_socketSelector);
-		m_clientThreads.push_back(std::make_pair(m_totalClients, std::thread(&Client::listen, *client)));
+		//m_clientThreads.push_back(std::make_pair(m_totalClients, std::thread(&Client::listen, *client)));
 		m_clients.push_back(client);
 		++m_totalClients;
 		m_listenThreadMutex.unlock();
@@ -178,7 +185,7 @@ void Server::listen()
 
 void Server::updatePlayerPosition(int clientID, sf::Vector2f newPosition)
 {
-	m_currentLevel.updatePlayerPosition(clientID, newPosition);
+	//m_currentLevel.updatePlayerPosition(clientID, newPosition);
 	sf::Packet packet;
 	packet << clientID << static_cast<int>(PacketType::PlayerPosition) << newPosition.x << newPosition.y;
 	broadcastUDPMessage(packet);
@@ -187,4 +194,33 @@ void Server::updatePlayerPosition(int clientID, sf::Vector2f newPosition)
 int Server::getNumberOfClients() const
 {
 	return static_cast<int>(m_clients.size());
+}
+
+void Server::handleMessageQueue()
+{
+	if (m_messageQueue.empty())
+	{
+		return;
+	}
+
+	for (const auto& message : m_messageQueue)
+	{
+		switch (message.m_packetType)
+		{
+		case PacketType::Disconnect:
+			disconnectClient(message.m_clientID);
+			break;
+
+		case PacketType::PlayerPosition:
+			updatePlayerPosition(message.m_clientID, message.m_position);
+			break;
+		}
+	}
+
+	m_messageQueue.clear();
+}
+
+void Server::addServerMessage(const ServerMessage & serverMessage)
+{
+	m_messageQueue.push_back(serverMessage);
 }

@@ -6,8 +6,8 @@ enum class PacketType
 {
 	Connect = 0,
 	Disconnect,
-	PlayerPosition,
-	EntityPosition
+	HeartBeat,
+	PlayerPosition
 };
 
 struct ServerMessage

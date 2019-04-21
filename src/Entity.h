@@ -9,6 +9,6 @@ struct Player
 		m_position(startingPosition)
 	{}
 
-	const int m_clientID;
+	int m_clientID;
 	sf::Vector2f m_position;
 };

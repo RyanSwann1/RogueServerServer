@@ -21,7 +21,7 @@ public:
 class Level
 {
 public:
-	Level(const LevelDetails& levelDetails, std::vector<sf::FloatRect>&& collisionLayer);
+	Level(const LevelDetails& levelDetails, std::vector<sf::FloatRect>&& collisionLayer, std::vector<sf::Vector2f> entityStartingPositions);
 
 	const LevelDetails& getDetails() const;
 	const std::vector<sf::FloatRect>& getCollisionLayer() const;

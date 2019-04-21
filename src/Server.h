@@ -14,12 +14,16 @@ class Server
 {
 public:
 	Server(sf::IpAddress ipAddress, unsigned short portNumber);
+	~Server();
 	Server(const Server&) = delete;
 	Server& operator=(const Server&) = delete;
 	Server(Server&&) = delete;
 	Server&& operator=(Server&&) = delete;
 
-	void update();
+	bool isRunning() const;
+	void beginListenThread();
+
+	void update(const sf::Time& time);
 
 private:
 	const sf::IpAddress m_ipAddress;
@@ -35,6 +39,7 @@ private:
 	sf::TcpListener m_tcpListener;
 	sf::SocketSelector m_socketSelector;
 	bool m_running;
+	sf::Time m_serverTime;
 
 	void disconnectClient(int clientID);
 	void broadcastUDPMessage(sf::Packet& packet);
@@ -43,4 +48,7 @@ private:
 	void updatePlayerPosition(int clientID, sf::Vector2f newPosition);
 
 	int getNumberOfClients() const;
+	void handleMessageQueue();
+
+	void addServerMessage(const ServerMessage& serverMessage);
 };

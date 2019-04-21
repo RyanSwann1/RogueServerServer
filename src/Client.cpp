@@ -13,6 +13,21 @@ Client::Client(std::deque<ServerMessage>& serverQueue, sf::SocketSelector & sock
 	m_ID(INVALID_CLIENT_ID)
 {}
 
+bool Client::isActive() const
+{
+	return waitingForHearbeat;
+}
+
+bool Client::waitingForHeartbeat() const
+{
+	return m_waitingForHearbeat;
+}
+
+bool Client::waitingForSecondHeartbeat() const
+{
+	return m_waitingForSecondHeartbeat;
+}
+
 int Client::getID() const
 {
 	return m_ID;
@@ -21,6 +36,11 @@ int Client::getID() const
 sf::TcpSocket & Client::getTCPSocket()
 {
 	return m_tcpSocket;
+}
+
+void Client::waitForHeartbeat()
+{
+	m_waitingForHearbeat = true;
 }
 
 void Client::listen()
@@ -51,6 +71,7 @@ void Client::listen()
 			m_serverQueue.emplace_back(clientID, static_cast<PacketType>(packetType), position);
 			m_mutex.unlock();
 			break;
+			case PacketTpy
 		}
 	}
 }
