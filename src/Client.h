@@ -8,6 +8,19 @@
 
 constexpr int INVALID_CLIENT_ID = -1;
 
+struct ServerMessage
+{
+	ServerMessage(int clientID, PacketType packetType, sf::Vector2f position = sf::Vector2f())
+		: m_clientID(clientID),
+		m_packetType(packetType),
+		m_position(position)
+	{}
+
+	int m_clientID;
+	PacketType m_packetType;
+	sf::Vector2f m_position;
+};
+
 class Client
 {
 public:

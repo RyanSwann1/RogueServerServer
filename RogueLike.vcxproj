@@ -143,9 +143,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Client.h" />
+    <ClInclude Include="src\Entity.h" />
     <ClInclude Include="src\Level\Level.h" />
     <ClInclude Include="src\Level\LevelParser.h" />
     <ClInclude Include="src\Server.h" />
+    <ClInclude Include="src\ServerMessage.h" />
     <ClInclude Include="src\Utilities\Base64.h" />
     <ClInclude Include="src\Utilities\tinyxml.h" />
   </ItemGroup>

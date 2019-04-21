@@ -100,8 +100,12 @@ void Server::addClient()
 			return;
 		}
 		m_listenThreadMutex.lock();
-		Client* client = new Client(*socket, m_totalClients, m_ipAddress, m_portNumber, m_messageQueue, m_socketSelector);
-		//m_clientThreads.push_back(std::make_pair(m_totalClients, std::thread(&Client::listen, *client)));
+		//Client(std::deque<ServerMessage>& serverQueue, sf::SocketSelector& socketSelector, sf::TcpSocket& tcpSocket,
+		//	const sf::IpAddress& serverIPAddress, unsigned short serverPortNumber);
+		Client* client = new Client(m_messageQueue, m_socketSelector, *socket, m_ipAddress, m_portNumber);
+
+			//*socket, m_totalClients, m_ipAddress, m_portNumber, m_messageQueue, m_socketSelector);
+		m_clientThreads.push_back(std::make_pair(m_totalClients, std::thread(&Client::listen, *client)));
 		m_clients.push_back(client);
 		++m_totalClients;
 		m_listenThreadMutex.unlock();
