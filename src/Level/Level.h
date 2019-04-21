@@ -1,10 +1,10 @@
 #pragma once
 
-
 #include <vector>
 #include <string>
 #include <unordered_map>
-#include "SFML/Graphics.hpp"
+#include "SFML/Graphics.hpp" 
+#include "../Entity.h"
 
 struct LevelDetails
 {
@@ -55,9 +55,15 @@ public:
 
 	void draw(sf::RenderWindow& window) const;
 
+
+	void updatePlayerPosition(int clientID, sf::Vector2f newPosition);
+	void addPlayer(int clientID, sf::Vector2f startingPosition);
+	void removePlayer(int clientID);
+
 private:
 	const LevelDetails m_details;
 	const std::vector<TileLayer> m_tileLayers;
 	const std::unordered_map<std::string, TileSheet> m_tileSheets;
 	const std::vector<sf::FloatRect> m_collisionLayer;
+	std::vector<Player> m_players;
 };

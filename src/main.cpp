@@ -60,7 +60,8 @@
 enum class PacketType
 {
 	Connect = 0,
-	Disconnect
+	Disconnect,
+	PlayerPosition
 };
 
 std::string IP_ADDRESS = "192.168.0.14";
@@ -69,212 +70,185 @@ sf::IpAddress ip("192.168.0.14");
 unsigned short port = 5030;
 constexpr int INVALID_CLIENT_ID = -1;
 
-struct Client
-{
-	Client(sf::TcpSocket& socket, int clientID, sf::IpAddress& ipAddress, unsigned short portNumber, 
-		std::deque<std::pair<PacketType, int>>& serverQueue, sf::SocketSelector& socketSelector)
-		: m_tcpSocket(socket),
-		m_ID(clientID),
-		m_ipAddress(ipAddress),
-		m_portNumber(portNumber),
-		m_connected(true),
-		m_serverQueue(serverQueue)
-	{}
+//struct Client
+//{
+//	Client(sf::TcpSocket& socket, int clientID, sf::IpAddress& ipAddress, unsigned short portNumber, 
+//		std::deque<std::pair<PacketType, int>>& serverQueue, sf::SocketSelector& socketSelector)
+//		: m_tcpSocket(socket),
+//		m_ID(clientID),
+//		m_ipAddress(ipAddress),
+//		m_portNumber(portNumber),
+//		m_connected(true),
+//		m_serverQueue(serverQueue)
+//	{}
+//
+//	void listen()
+//	{
 
-	void listen()
-	{
-		sf::Packet packet;
-		while (m_connected)
-		{
-			packet.clear();
-			if (m_tcpSocket.receive(packet) != sf::Socket::Done)
-			{
-				continue;
-			}
+//	}
+//
+//	std::mutex m_mutex;
+//	sf::TcpSocket& m_tcpSocket;
+//	sf::IpAddress m_ipAddress;
+//	int m_ID;
+//	unsigned short m_portNumber;
+//	bool m_connected;
+//	std::deque<std::pair<PacketType, int>>& m_serverQueue;
+//	sf::SocketSelector m_socketSelector;
+//};
 
-			int packetType = 0;
-			int clientID = 0;
-			packet >> packetType >> clientID;
-			if (static_cast<PacketType>(packetType) == PacketType::Disconnect)
-			{
-				m_mutex.lock();
-				m_serverQueue.push_back(std::make_pair(static_cast<PacketType>(packetType), clientID));
-				m_mutex.unlock();
-			}
-		}
-	}
-
-	std::mutex m_mutex;
-	sf::TcpSocket& m_tcpSocket;
-	sf::IpAddress m_ipAddress;
-	int m_ID;
-	unsigned short m_portNumber;
-	bool m_connected;
-	std::deque<std::pair<PacketType, int>>& m_serverQueue;
-	sf::SocketSelector m_socketSelector;
-};
-
-//int m_totalClients;
-//std::list<Client*> m_clients;
-//sf::UdpSocket m_udpSocket;
-//sf::TcpListener m_tcpListener;
-//sf::IpAddress m_ipAddress;
-//sf::SocketSelector m_socketSelector;
-//unsigned short m_portNumber;
-//bool m_running;
-
-class Server
-{
-public:
-	Server(sf::IpAddress ipAddress, unsigned short portNumber)
-		: m_totalClients(0),
-		m_clients(),
-		m_udpSocket(),
-		m_tcpListener(),
-		m_ipAddress(ipAddress),
-		m_socketSelector(),
-		m_portNumber(portNumber),
-		m_running(true)
-	{
-		if (m_tcpListener.listen(m_portNumber, m_ipAddress) != sf::Socket::Done)
-		{
-			std::cout << "TCP Listener unable to listen\n";
-		}
-		m_socketSelector.add(m_tcpListener);
-		m_socketSelector.add(m_udpSocket);
-		std::cout << "Server Successfully Started\n";
-	}
-
-	~Server()
-	{
-		for (auto& i : m_clientThreads)
-		{
-			i.second.join();
-		}
-
-		m_listenThread.join();
-	}
-
-	void listen()
-	{
-		while (m_running)
-		{
-			if (m_socketSelector.wait(sf::seconds(2)))
-			{
-				//Handle new clients
-				if (m_socketSelector.isReady(m_tcpListener))
-				{
-					//if == fail
-					//Failed to add client
-					//Display server message saying couldn't accept connection from tcp socket
-					addClient();
-				}
-			}
-		}
-	}
-
-	void addClient()
-	{
-		sf::TcpSocket* socket = new sf::TcpSocket();
-		if (m_tcpListener.accept(*socket) == sf::Socket::Done)
-		{
-			socket->connect(m_ipAddress, m_portNumber);
-			m_socketSelector.add(*socket);
-		
-			sf::Packet packet;
-			packet << static_cast<int>(PacketType::Connect) << m_totalClients;
-			if (socket->send(packet) != sf::Socket::Done)
-			{
-				delete socket;
-				std::cout << "Client added unsucessfuly.\n";
-				return;
-			}
-			
-			Client* client = new Client(*socket, m_totalClients, m_ipAddress, m_portNumber, m_queue, m_socketSelector);
-			//m_clientThreads.push_back(std::make_pair(m_totalClients, std::thread(&Client::listen, *client)));
-			m_clients.push_back(client);
-			++m_totalClients;
-			std::cout << "New Client Added\n";
-		}
-		else
-		{
-			delete socket;
-			std::cout << "Client added unsuccessfully.\n";
-		}
-	}
-
-	void update()
-	{
-		if (m_queue.empty())
-		{
-			return;
-		}
-
-		for (const auto& i : m_queue)
-		{
-			//Handle Client Disconnects
-			if (i.first == PacketType::Disconnect)
-			{
-				disconnectClient(i.second);
-			}
-		}
-		m_queue.clear();
-	}
-
-	void disconnectClient(int clientID)
-	{
-		auto iter = std::find_if(m_clients.begin(), m_clients.end(), [clientID](Client* client) { return client->m_ID == clientID; });
-		if (iter != m_clients.end())
-		{
-			m_socketSelector.remove((*iter)->m_tcpSocket);
-			//Erase Thread
-			auto activeClientThread = std::find_if(m_clientThreads.begin(), m_clientThreads.end(), [clientID](const auto& thread) { return thread.first == clientID; });
-			if (activeClientThread != m_clientThreads.end())
-			{
-				//TODO: Not sure about this function. 
-				//Might be dangerous
-				activeClientThread->second.detach();
-				m_clientThreads.erase(activeClientThread);
-			}
-
-			m_clients.erase(iter);
-			broadcastUDPMessage(clientID);
-		}
-	}
-
-	void broadcastUDPMessage(int clientID)
-	{
-		//Inform all clients of client disconnection
-		sf::Packet packet;
-		packet << static_cast<int>(PacketType::Disconnect) << clientID;
-		if (m_udpSocket.send(packet, m_ipAddress, m_portNumber) == sf::Socket::Done)
-		{
-			std::cout << "Client disconnected from server.\n";
-		}
-	}
-	void broadcastTCPMessage()
-	{
-		//TODO: 
-		//Broadcast messages that have to be picked up from clients
-	}
-
-	bool isRunning() const
-	{
-		return m_running;
-	}
-
-	std::deque<std::pair<PacketType, int>> m_queue;
-	std::list<std::pair<int, std::thread>> m_clientThreads;
-	std::thread m_listenThread;
-	int m_totalClients;
-	std::list<Client*> m_clients;
-	sf::UdpSocket m_udpSocket;
-	sf::TcpListener m_tcpListener;
-	sf::IpAddress m_ipAddress;
-	sf::SocketSelector m_socketSelector;
-	unsigned short m_portNumber;
-	bool m_running;
-};
+//class Server
+//{
+//public:
+//	Server(sf::IpAddress ipAddress, unsigned short portNumber)
+//		: m_totalClients(0),
+//		m_clients(),
+//		m_udpSocket(),
+//		m_tcpListener(),
+//		m_ipAddress(ipAddress),
+//		m_socketSelector(),
+//		m_portNumber(portNumber),
+//		m_running(true)
+//	{
+//		if (m_tcpListener.listen(m_portNumber, m_ipAddress) != sf::Socket::Done)
+//		{
+//			std::cout << "TCP Listener unable to listen\n";
+//		}
+//		m_socketSelector.add(m_tcpListener);
+//		m_socketSelector.add(m_udpSocket);
+//		std::cout << "Server Successfully Started\n";
+//	}
+//
+//	~Server()
+//	{
+//		for (auto& i : m_clientThreads)
+//		{
+//			i.second.join();
+//		}
+//
+//		m_listenThread.join();
+//	}
+//
+//	void listen()
+//	{
+//		while (m_running)
+//		{
+//			if (m_socketSelector.wait(sf::seconds(2)))
+//			{
+//				//Handle new clients
+//				if (m_socketSelector.isReady(m_tcpListener))
+//				{
+//					//if == fail
+//					//Failed to add client
+//					//Display server message saying couldn't accept connection from tcp socket
+//					addClient();
+//				}
+//			}
+//		}
+//	}
+//
+//	void addClient()
+//	{
+//		sf::TcpSocket* socket = new sf::TcpSocket();
+//		if (m_tcpListener.accept(*socket) == sf::Socket::Done)
+//		{
+//			socket->connect(m_ipAddress, m_portNumber);
+//			m_socketSelector.add(*socket);
+//		
+//			sf::Packet packet;
+//			packet << static_cast<int>(PacketType::Connect) << m_totalClients;
+//			if (socket->send(packet) != sf::Socket::Done)
+//			{
+//				delete socket;
+//				std::cout << "Client added unsucessfuly.\n";
+//				return;
+//			}
+//			
+//			Client* client = new Client(*socket, m_totalClients, m_ipAddress, m_portNumber, m_queue, m_socketSelector);
+//			//m_clientThreads.push_back(std::make_pair(m_totalClients, std::thread(&Client::listen, *client)));
+//			m_clients.push_back(client);
+//			++m_totalClients;
+//			std::cout << "New Client Added\n";
+//		}
+//		else
+//		{
+//			delete socket;
+//			std::cout << "Client added unsuccessfully.\n";
+//		}
+//	}
+//
+//	void update()
+//	{
+//		if (m_queue.empty())
+//		{
+//			return;
+//		}
+//
+//		for (const auto& i : m_queue)
+//		{
+//			//Handle Client Disconnects
+//			if (i.first == PacketType::Disconnect)
+//			{
+//				disconnectClient(i.second);
+//			}
+//		}
+//		m_queue.clear();
+//	}
+//
+//	void disconnectClient(int clientID)
+//	{
+//		auto iter = std::find_if(m_clients.begin(), m_clients.end(), [clientID](Client* client) { return client->m_ID == clientID; });
+//		if (iter != m_clients.end())
+//		{
+//			m_socketSelector.remove((*iter)->m_tcpSocket);
+//			//Erase Thread
+//			auto activeClientThread = std::find_if(m_clientThreads.begin(), m_clientThreads.end(), [clientID](const auto& thread) { return thread.first == clientID; });
+//			if (activeClientThread != m_clientThreads.end())
+//			{
+//				//TODO: Not sure about this function. 
+//				//Might be dangerous
+//				activeClientThread->second.detach();
+//				m_clientThreads.erase(activeClientThread);
+//			}
+//
+//			m_clients.erase(iter);
+//			broadcastUDPMessage(clientID);
+//		}
+//	}
+//
+//	void broadcastUDPMessage(int clientID)
+//	{
+//		//Inform all clients of client disconnection
+//		sf::Packet packet;
+//		packet << static_cast<int>(PacketType::Disconnect) << clientID;
+//		if (m_udpSocket.send(packet, m_ipAddress, m_portNumber) == sf::Socket::Done)
+//		{
+//			std::cout << "Client disconnected from server.\n";
+//		}
+//	}
+//	void broadcastTCPMessage()
+//	{
+//		//TODO: 
+//		//Broadcast messages that have to be picked up from clients
+//	}
+//
+//	bool isRunning() const
+//	{
+//		return m_running;
+//	}
+//
+//	std::deque<std::pair<PacketType, int>> m_queue;
+//	std::list<std::pair<int, std::thread>> m_clientThreads;
+//	std::thread m_listenThread;
+//	int m_totalClients;
+//	std::list<Client*> m_clients;
+//	sf::UdpSocket m_udpSocket;
+//	sf::TcpListener m_tcpListener;
+//	sf::IpAddress m_ipAddress;
+//	sf::SocketSelector m_socketSelector;
+//	unsigned short m_portNumber;
+//	bool m_running;
+//};
 
 //Have list mutex locked
 //mutex lock
