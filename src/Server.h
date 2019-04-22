@@ -39,7 +39,7 @@ private:
 	sf::TcpListener m_tcpListener;
 	sf::SocketSelector m_socketSelector;
 	bool m_running;
-	sf::Time m_serverTime;
+	float m_elaspedTime;
 
 	void disconnectClient(int clientID);
 	void broadcastUDPMessage(sf::Packet& packet);
@@ -51,4 +51,5 @@ private:
 	void handleMessageQueue();
 
 	void addServerMessage(const ServerMessage& serverMessage);
+	void handleServerHeartbeats();
 };

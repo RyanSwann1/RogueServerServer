@@ -43,6 +43,11 @@ void Client::waitForHeartbeat()
 	m_waitingForHearbeat = true;
 }
 
+void Client::waitForSecondHeartBeat()
+{
+	m_waitingForSecondHeartbeat = true;
+}
+
 void Client::listen()
 {
 	sf::Packet packet;
@@ -71,7 +76,10 @@ void Client::listen()
 			m_serverQueue.emplace_back(clientID, static_cast<PacketType>(packetType), position);
 			m_mutex.unlock();
 			break;
-			case PacketTpy
+		case PacketType::HeartBeat :
+			m_waitingForHearbeat = false;
+			m_waitingForSecondHeartbeat = false;
+			break;
 		}
 	}
 }

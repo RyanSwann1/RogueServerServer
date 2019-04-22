@@ -21,6 +21,7 @@ public:
 	sf::TcpSocket& getTCPSocket();
 
 	void waitForHeartbeat();
+	void waitForSecondHeartBeat();
 	void listen();
 
 private:
