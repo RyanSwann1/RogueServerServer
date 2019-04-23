@@ -3,6 +3,7 @@
 #include "Level/Level.h"
 #include "SFML/Network.hpp"
 #include "ServerMessage.h"
+#include "GameState.h"
 #include <vector>
 #include <deque>
 #include <list>
@@ -40,6 +41,7 @@ private:
 	sf::SocketSelector m_socketSelector;
 	bool m_running;
 	float m_elaspedTime;
+	GameState m_gameState;
 
 	void disconnectClient(int clientID);
 	void broadcastUDPMessage(sf::Packet& packet);
