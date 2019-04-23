@@ -54,34 +54,34 @@ void Server::update(const sf::Time& time)
 {
 	handleMessageQueue();
 
-	m_elaspedTime += time.asMilliseconds();
-	if (m_elaspedTime >= HEARTBEAT_INTERVAL)
-	{
-		for (auto& client : m_clients)
-		{
-			if (!client->waitingForHeartbeat())
-			{
-				client->waitForHeartbeat();
-			}
-			if (client->waitingForHeartbeat() && !client->waitingForSecondHeartbeat())
-			{
-				client->waitForSecondHeartBeat();
-			}
+	//m_elaspedTime += time.asMilliseconds();
+	//if (m_elaspedTime >= HEARTBEAT_INTERVAL)
+	//{
+	//	for (auto& client : m_clients)
+	//	{
+	//		if (!client->waitingForHeartbeat())
+	//		{
+	//			client->waitForHeartbeat();
+	//		}
+	//		if (client->waitingForHeartbeat() && !client->waitingForSecondHeartbeat())
+	//		{
+	//			client->waitForSecondHeartBeat();
+	//		}
 
-			//Allow for client to attempt connection 
-			if (client->waitingForHeartbeat())
-			{
-				continue;
-			}
-			//Client Not responding to server for second heartbeat
-			//Disconnect client from server
-			if (client->waitingForSecondHeartbeat())
-			{
-				addServerMessage(ServerMessage(client->getID(), PacketType::Disconnect));
-			}
-		}
-		m_elaspedTime = 0;
-	}
+	//		//Allow for client to attempt connection 
+	//		if (client->waitingForHeartbeat())
+	//		{
+	//			continue;
+	//		}
+	//		//Client Not responding to server for second heartbeat
+	//		//Disconnect client from server
+	//		if (client->waitingForSecondHeartbeat())
+	//		{
+	//			addServerMessage(ServerMessage(client->getID(), PacketType::Disconnect));
+	//		}
+	//	}
+	//	m_elaspedTime = 0;
+	//}
 }
 
 void Server::disconnectClient(int clientID)

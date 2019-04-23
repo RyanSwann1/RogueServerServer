@@ -1,6 +1,7 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include "Server.h"
+#include "GameState.h"
 
 //class MyClass {
 //private:
@@ -51,11 +52,11 @@
 //stores for a bit
 //spits out when neccessary
 
-std::string IP_ADDRESS = "192.168.0.14";
-int PORT_NUMBER = 5030;
-sf::IpAddress ip("192.168.0.14");
-unsigned short port = 5030;
-constexpr int INVALID_CLIENT_ID = -1;
+//std::string IP_ADDRESS = "192.168.0.14";
+//int PORT_NUMBER = 5030;
+//sf::IpAddress ip("192.168.0.14");
+//unsigned short port = 5030;
+//constexpr int INVALID_CLIENT_ID = -1;
 
 //struct Client
 //{

@@ -14,7 +14,6 @@ public:
 	Client(std::deque<ServerMessage>& serverQueue, sf::SocketSelector& socketSelector, sf::TcpSocket& tcpSocket,
 		const sf::IpAddress& serverIPAddress, unsigned short serverPortNumber);
 
-	bool isActive() const;
 	bool waitingForHeartbeat() const;
 	bool waitingForSecondHeartbeat() const;
 	int getID() const;

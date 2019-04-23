@@ -1,4 +1,4 @@
-#include "Level.h"
+#include "src/Level/Level.h"
 #include <utility>
 #include <assert.h>
 #include <algorithm>
@@ -8,7 +8,7 @@ Level::Level(const LevelDetails& levelDetails, std::vector<sf::FloatRect>&& coll
 	: m_details(levelDetails),
 	m_collisionLayer(std::move(collisionLayer))
 {
-		
+
 }
 
 const LevelDetails & Level::getDetails() const

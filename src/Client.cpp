@@ -13,11 +13,6 @@ Client::Client(std::deque<ServerMessage>& serverQueue, sf::SocketSelector & sock
 	m_ID(INVALID_CLIENT_ID)
 {}
 
-bool Client::isActive() const
-{
-	return waitingForHearbeat;
-}
-
 bool Client::waitingForHeartbeat() const
 {
 	return m_waitingForHearbeat;
@@ -61,6 +56,7 @@ void Client::listen()
 
 		int packetType = 0;
 		int clientID = 0;
+		sf::Vector2f position;
 		packet >> packetType >> clientID;
 		switch (static_cast<PacketType>(packetType))
 		{
@@ -71,12 +67,11 @@ void Client::listen()
 			break;
 		case PacketType::PlayerPosition:
 			m_mutex.lock();
-			sf::Vector2f position;
 			packet >> packetType >> clientID >> position.x >> position.y;
 			m_serverQueue.emplace_back(clientID, static_cast<PacketType>(packetType), position);
 			m_mutex.unlock();
 			break;
-		case PacketType::HeartBeat :
+		case PacketType::HeartBeat:
 			m_waitingForHearbeat = false;
 			m_waitingForSecondHeartbeat = false;
 			break;
