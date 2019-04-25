@@ -131,16 +131,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\GameDetails.cpp" />
     <ClCompile Include="src\GameState.cpp" />
-    <ClCompile Include="Level.cpp" />
+    <ClCompile Include="src\Level\Level.cpp" />
     <ClCompile Include="src\Client.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Server.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\GameDetails.h" />
     <ClInclude Include="src\GameState.h" />
     <ClInclude Include="src\Client.h" />
     <ClInclude Include="src\Entity.h" />
+    <ClInclude Include="src\LevelDetails.h" />
+    <ClInclude Include="src\Level\Level.h" />
     <ClInclude Include="src\Server.h" />
     <ClInclude Include="src\ServerMessage.h" />
   </ItemGroup>

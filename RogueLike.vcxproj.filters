@@ -24,10 +24,13 @@
     <ClCompile Include="src\Client.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Level.cpp">
+    <ClCompile Include="src\GameState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\GameState.cpp">
+    <ClCompile Include="src\GameDetails.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Level\Level.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -45,6 +48,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\GameState.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\LevelDetails.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GameDetails.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Level\Level.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

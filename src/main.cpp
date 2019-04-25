@@ -243,9 +243,7 @@
 //Mutex when adding somethihng to buffer-Contaienr - Queue
 //Only one access can access the queue at one time
 
-
 //Client have own thread
-
 
 //Send TCP TO SERVER - THEN SEND UDP TO EVERYONE ELSE
 //THREAD LISTENING FORF NEW CLIENTS
@@ -260,8 +258,7 @@
 
 int main()
 {
-	sf::Clock clock;
-	Server server("152.105.219.105", 5030);
+	Server server("152.105.219.109", 5030);
 	server.beginListenThread();
 	while (server.isRunning())
 	{

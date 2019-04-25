@@ -24,12 +24,6 @@ Server::Server(sf::IpAddress ipAddress, unsigned short portNumber)
 	{
 		std::cout << "TCP Listener unable to listen\n";
 	}
-
-	if (m_udpSocket.bind(m_portNumber, m_ipAddress) != sf::Socket::Done)
-	{
-		std::cout << "Unable to bind to port number\n";
-	}
-
 	m_socketSelector.add(m_tcpListener);
 	m_socketSelector.add(m_udpSocket);
 	std::cout << "Server Successfully Started\n";
@@ -142,11 +136,12 @@ void Server::addClient()
 			return;
 		}
 
-		socket->connect(m_ipAddress, m_portNumber);
+		//socket->connect(m_ipAddress, m_portNumber);
 		m_listenThreadMutex.lock();
 		m_socketSelector.add(*socket); 
 		m_listenThreadMutex.unlock();
 		sf::Packet packet;
+		//Send game data
 		packet << static_cast<int>(PacketType::Connect) << m_totalClients;
 		if (socket->send(packet) != sf::Socket::Done)
 		{
@@ -154,6 +149,7 @@ void Server::addClient()
 			std::cout << "Client added unsucessfuly.\n";
 			return;
 		}
+		
 		m_listenThreadMutex.lock();
 		//Client(std::deque<ServerMessage>& serverQueue, sf::SocketSelector& socketSelector, sf::TcpSocket& tcpSocket,
 		//	const sf::IpAddress& serverIPAddress, unsigned short serverPortNumber);
@@ -177,7 +173,7 @@ void Server::listen()
 {
 	while (m_running)
 	{
-		if (m_socketSelector.wait(sf::seconds(2)))
+		if (m_socketSelector.wait())
 		{
 			if (m_socketSelector.isReady(m_tcpListener))
 			{

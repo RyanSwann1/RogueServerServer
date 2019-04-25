@@ -5,55 +5,19 @@
 #include <assert.h>
 
 LevelDetails parseLevelDetails(const TiXmlElement& rootElement);
-std::vector<std::vector<int>> decodeTileLayer(const TiXmlElement & tileLayerElement, sf::Vector2i levelSize);
 std::vector<sf::Vector2f> parseEntities(const TiXmlElement & rootElement, int tileSize);
-std::vector<sf::FloatRect> parseCollisionLayer(const TiXmlElement & rootElement, int tileSize);
 
-//Level LevelParser::parseLevel(const std::string& levelName)
-//{
-//	TiXmlDocument mapFile;
-//	bool mapLoaded = mapFile.LoadFile(levelName);
-//	assert(mapLoaded);
-//
-//	const auto& rootElement = mapFile.RootElement();
-//	LevelDetails levelDetails = parseLevelDetails(*rootElement);
-//	std::vector<TileLayer> tileLayers = parseTileLayers(*rootElement, levelDetails);
-//	std::unordered_map<std::string, TileSheet> tileSheets = parseTileSheets(*rootElement);
-//	std::vector<sf::FloatRect> collisionLayer = parseCollisionLayer(*rootElement, levelDetails.m_tileSize);
-//	std::vector<sf::Vector2f> entities = parseEntities(*rootElement, levelDetails.m_tileSize);
-//	
-//	//return Level();
-//}
-
-std::vector<sf::FloatRect> parseCollisionLayer(const TiXmlElement & rootElement, int tileSize)
+Level LevelParser::parseLevel(const std::string& levelName)
 {
-	std::vector<sf::FloatRect> collidablePositions;
-	for (const auto* collisionLayerElement = rootElement.FirstChildElement(); collisionLayerElement != nullptr;
-		collisionLayerElement = collisionLayerElement->NextSiblingElement())
-	{
-		if (collisionLayerElement->Value() != std::string("objectgroup"))
-		{
-			continue;
-		}
+	TiXmlDocument mapFile;
+	bool mapLoaded = mapFile.LoadFile(levelName);
+	assert(mapLoaded);
 
-		if (collisionLayerElement->Attribute("name") != std::string("Collision Layer"))
-		{
-			continue;
-		}
-
-		for (const auto* collisionElement = collisionLayerElement->FirstChildElement();
-			collisionElement != nullptr; collisionElement = collisionElement->NextSiblingElement())
-		{
-			int xPosition = 0, yPosition = 0;
-			collisionElement->Attribute("x", &xPosition);
-			collisionElement->Attribute("y", &yPosition);
-			//Hack for Tiled.
-			yPosition -= tileSize;
-			//collidablePositions.emplace_back(xPosition, yPosition, tileSize, tileSize);
-		}
-	}
+	const auto& rootElement = mapFile.RootElement();
+	LevelDetails levelDetails = parseLevelDetails(*rootElement);
+	std::vector<sf::Vector2f> entities = parseEntities(*rootElement, levelDetails.m_tileSize);
 	
-	return collidablePositions;
+	//return Level();
 }
 
 std::vector<sf::Vector2f> parseEntities(const TiXmlElement & rootElement, int tileSize)
@@ -79,45 +43,6 @@ std::vector<sf::Vector2f> parseEntities(const TiXmlElement & rootElement, int ti
 	}
 
 	return entityStartingPositions;
-}
-
-
-std::vector<std::vector<int>> decodeTileLayer(const TiXmlElement & tileLayerElement, sf::Vector2i levelSize)
-{
-	std::vector<std::vector<int>> tileData;
-	tileData.reserve(levelSize.y);
-
-	std::string decodedIDs; //Base64 decoded information
-	const TiXmlElement* dataNode = nullptr; //Store our node once we find it
-	for (const TiXmlElement* e = tileLayerElement.FirstChildElement(); e != nullptr; e = e->NextSiblingElement())
-	{
-		if (e->Value() == std::string("data"))
-		{
-			dataNode = e;
-		}
-	}
-	assert(dataNode);
-
-	Base64 base64;
-	const TiXmlText* text = dataNode->FirstChild()->ToText();
-	const std::string t = text->Value();
-	decodedIDs = base64.base64_decode(t);
-
-	const std::vector<int> layerColumns(levelSize.x);
-	for (int i = 0; i < levelSize.y; ++i)
-	{
-		tileData.push_back(layerColumns);
-	}
-
-	for (int rows = 0; rows < levelSize.y; ++rows)
-	{
-		for (int cols = 0; cols < levelSize.x; ++cols)
-		{
-			tileData[rows][cols] = *((int*)decodedIDs.data() + rows * levelSize.x + cols) - 1;
-		}
-	}
-
-	return tileData;
 }
 
 LevelDetails parseLevelDetails(const TiXmlElement& rootElement)
