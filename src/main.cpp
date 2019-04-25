@@ -261,7 +261,7 @@
 int main()
 {
 	sf::Clock clock;
-	Server server("192.168.0.14", 5030);
+	Server server("152.105.219.105", 5030);
 	server.beginListenThread();
 	while (server.isRunning())
 	{
