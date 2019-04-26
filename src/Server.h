@@ -3,8 +3,7 @@
 #include "Level/Level.h"
 #include "SFML/Network.hpp"
 #include "ServerMessage.h"
-#include "GameState.h"
-#include <vector>
+#include "GameData.h"
 #include <deque>
 #include <list>
 #include <thread>
@@ -14,7 +13,7 @@ struct Client;
 class Server
 {
 public:
-	Server(sf::IpAddress ipAddress, unsigned short portNumber);
+	Server(const sf::IpAddress& ipAddress, unsigned short portNumber);
 	~Server();
 	Server(const Server&) = delete;
 	Server& operator=(const Server&) = delete;
@@ -24,7 +23,7 @@ public:
 	bool isRunning() const;
 	void beginListenThread();
 
-	void update(const sf::Time& time);
+	void update();
 
 private:
 	const sf::IpAddress m_ipAddress;
@@ -34,24 +33,21 @@ private:
 	std::list<std::pair<int, std::thread>> m_clientThreads;
 	std::thread m_listenThread;
 	std::mutex m_listenThreadMutex;
-	int m_totalClients;
 	std::list<Client*> m_clients;
 	sf::UdpSocket m_udpSocket;
 	sf::TcpListener m_tcpListener;
 	sf::SocketSelector m_socketSelector;
 	bool m_running;
-	float m_elaspedTime;
-	GameState m_gameState;
+	GameData m_latestGameData;
 
 	void disconnectClient(int clientID);
 	void broadcastUDPMessage(sf::Packet& packet);
 	void addClient();
 	void listen();
 	void updatePlayerPosition(int clientID, sf::Vector2f newPosition);
-
-	int getNumberOfClients() const;
 	void handleMessageQueue();
-
 	void addServerMessage(const ServerMessage& serverMessage);
-	void handleServerHeartbeats();
+	
+	int getNumberOfClients() const;
+	bool sendLatestGameDataToClient(sf::TcpSocket& socket);
 };

@@ -5,7 +5,7 @@
 constexpr int TOTAL_CLIENTS_ALLOWED = 6;
 constexpr int HEARTBEAT_INTERVAL = 10000;
 
-Server::Server(sf::IpAddress ipAddress, unsigned short portNumber)
+Server::Server(const sf::IpAddress& ipAddress, unsigned short portNumber)
 	: m_ipAddress(ipAddress),
 	m_portNumber(portNumber),
 	m_totalClientsAllowed(TOTAL_CLIENTS_ALLOWED),
@@ -13,7 +13,6 @@ Server::Server(sf::IpAddress ipAddress, unsigned short portNumber)
 	m_clientThreads(),
 	m_listenThread(),
 	m_listenThreadMutex(),
-	m_totalClients(0),
 	m_clients(),
 	m_udpSocket(),
 	m_tcpListener(),
@@ -44,7 +43,7 @@ void Server::beginListenThread()
 	m_listenThread = std::thread(&Server::listen, this);
 }
 
-void Server::update(const sf::Time& time)
+void Server::update()
 {
 	handleMessageQueue();
 
@@ -61,7 +60,6 @@ void Server::update(const sf::Time& time)
 	//		{
 	//			client->waitForSecondHeartBeat();
 	//		}
-
 	//		//Allow for client to attempt connection 
 	//		if (client->waitingForHeartbeat())
 	//		{
@@ -80,8 +78,7 @@ void Server::update(const sf::Time& time)
 
 void Server::disconnectClient(int clientID)
 {
-	//Say to client to stop responding to any incoming messages;
-
+	//Say to client to stop responding to any incoming messages;m_
 	auto iter = std::find_if(m_clients.begin(), m_clients.end(), [clientID](Client* client) { return client->getID() == clientID; });
 	if (iter != m_clients.end())
 	{
@@ -125,47 +122,35 @@ void Server::addClient()
 		//Game is full - disallow connection
 		if (getNumberOfClients() == m_totalClientsAllowed)
 		{
-			socket->connect(m_ipAddress, m_portNumber);
 			sf::Packet packet;
 			packet << static_cast<int>(PacketType::Disconnect);
 			socket->send(packet);
-
-			//TODO: This might be dangerous
-			//Could delete before the message has been sent out 
 			delete socket;
 			return;
 		}
 
-		//socket->connect(m_ipAddress, m_portNumber);
-		m_listenThreadMutex.lock();
-		m_socketSelector.add(*socket); 
-		m_listenThreadMutex.unlock();
-		sf::Packet packet;
-		//Send game data
-		packet << static_cast<int>(PacketType::Connect) << m_totalClients;
-		if (socket->send(packet) != sf::Socket::Done)
+		//TODO: Not sure if need
+		//m_listenThreadMutex.lock();
+		//m_socketSelector.add(*socket); 
+		//m_listenThreadMutex.unlock();
+
+		if (!sendLatestGameDataToClient(*socket))
 		{
 			delete socket;
-			std::cout << "Client added unsucessfuly.\n";
+			std::cout << "Client Added unsuccesfully\n";
 			return;
 		}
-		
-		m_listenThreadMutex.lock();
-		//Client(std::deque<ServerMessage>& serverQueue, sf::SocketSelector& socketSelector, sf::TcpSocket& tcpSocket,
-		//	const sf::IpAddress& serverIPAddress, unsigned short serverPortNumber);
-		Client* client = new Client(m_messageQueue, m_socketSelector, *socket, m_ipAddress, m_portNumber);
 
-			//*socket, m_totalClients, m_ipAddress, m_portNumber, m_messageQueue, m_socketSelector);
-		//m_clientThreads.push_back(std::make_pair(m_totalClients, std::thread(&Client::listen, *client)));
+		m_listenThreadMutex.lock();
+		Client* client = new Client(m_messageQueue, m_socketSelector, *socket, m_ipAddress, m_portNumber);
 		m_clients.push_back(client);
-		++m_totalClients;
 		m_listenThreadMutex.unlock();
 		std::cout << "New Client Added\n";
 	}
 	else
 	{
 		delete socket;
-		std::cout << "Client added unsuccessfully.\n";
+		std::cout << "Failed to listen to client.\n";
 	}
 }
 
@@ -225,7 +210,50 @@ void Server::addServerMessage(const ServerMessage & serverMessage)
 	m_messageQueue.push_back(serverMessage);
 }
 
-void Server::handleServerHeartbeats()
-{
 
+//struct GameData
+//{
+//	GameData();
+//
+//	const std::string& getCurrentLevelName() const;
+//	void reset(const std::string& levelName);
+//
+//	void updatePlayerPosition(int clientID, sf::Vector2i newPosition);
+//	void addPlayer(int clientID, sf::Vector2i startingPosition);
+//	void removePlayer(int clientID);
+//
+//	std::string m_currentLevelName;
+//	std::vector<ClientProperties> m_clients;
+//	std::vector<sf::Vector2i> m_startingPositions;
+//};
+
+//uint16_t size = sizeof(levelName);
+//memcpy(message[0], &size, sizeof(uint16_t));
+//memcpy(message[sizeof(uint16_t)], levelName.data(), levelname.size());
+
+bool Server::sendLatestGameDataToClient(sf::TcpSocket& socket)
+{
+	char message[1500];
+
+	uint16_t levelNameSize = sizeof(m_latestGameData.m_currentLevelName);
+
+	//memcpy(&message[0], &levelNameSize, sizeof(uint16_t));
+	memcpy(&message[0], m_latestGameData.m_currentLevelName.data(), m_latestGameData.m_currentLevelName.size());
+
+
+	std::vector<int> p;
+	p.push_back(1);
+	p.push_back(2);
+	p.push_back(3);
+	//memcpy(&message[sizeof(m_latestGameData.m_currentLevelName)], p.data(), p.size());
+	//memcpy(&message[sizeof(levelNameSize)], )
+	memcpy(&message[sizeof(m_latestGameData.m_currentLevelName)], p.data(), p.size());
+
+	if (socket.send(message, sizeof(message)) != sf::Socket::Done)
+	{
+		std::cout << "Failed to send data\n";
+		return false;
+	}
+
+	return true;
 }

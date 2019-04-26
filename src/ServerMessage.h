@@ -7,7 +7,8 @@ enum class PacketType
 	Connect = 0,
 	Disconnect,
 	HeartBeat,
-	PlayerPosition
+	PlayerPosition,
+	LatestGameData
 };
 
 struct ServerMessage
