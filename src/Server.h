@@ -47,8 +47,7 @@ private:
 	void listen();
 	void updatePlayerPosition(int clientID, sf::Vector2f newPosition);
 	void handleMessageQueue();
-	void addServerMessage(const ServerMessage& serverMessage);
 	
 	int getNumberOfClients() const;
-	bool sendLatestGameDataToClient(sf::TcpSocket& socket);
+	//bool sendLatestGameDataToClient(sf::TcpSocket& socket);
 };

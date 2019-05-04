@@ -4,7 +4,12 @@ Client::Client(Messenger & messenger, sf::TcpSocket & tcpSocket)
 	: m_messenger(messenger),
 	m_tcpSocket(tcpSocket),
 	m_ID(INVALID_CLIENT_ID)
-{}
+{
+	sf::Packet packet;
+	int packetType = static_cast<int>(PacketType::EstablishConnection);
+	packet << packetType << m_ID;
+	m_tcpSocket.send(packet);
+}
 
 int Client::getID() const
 {

@@ -4,6 +4,22 @@
 #include <SFML/Graphics.hpp>
 #include <mutex>
 
+
+//enum class PacketType
+//{
+//	EstablishConnection = 0,
+//	RemoteClientConnection,
+//	RemoteClientDisconnection,
+//	ClientName,
+//	EnteredGame,
+//	HeartBeat,
+//	PlayerPosition,
+//	LatestGameData,
+//	LatestLevelName,
+//	LatestClientPositions
+//};
+
+
 enum class PacketType
 {
 	Connect = 0,
