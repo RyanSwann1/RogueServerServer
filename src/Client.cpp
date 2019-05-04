@@ -1,27 +1,10 @@
 #include "Client.h"
 
-//Client
-Client::Client(std::deque<ServerMessage>& serverQueue, sf::SocketSelector & socketSelector, 
-	sf::TcpSocket & tcpSocket, const sf::IpAddress & serverIPAddress, unsigned short serverPortNumber)
-	: m_serverQueue(serverQueue),
-	m_socketSelector(socketSelector),
-	m_connected(false),
+Client::Client(Messenger & messenger, sf::TcpSocket & tcpSocket)
+	: m_messenger(messenger),
 	m_tcpSocket(tcpSocket),
-	m_mutex(),
-	m_serverIPAddress(serverIPAddress),
-	m_serverPortNumber(serverPortNumber),
 	m_ID(INVALID_CLIENT_ID)
 {}
-
-bool Client::waitingForHeartbeat() const
-{
-	return m_waitingForHearbeat;
-}
-
-bool Client::waitingForSecondHeartbeat() const
-{
-	return m_waitingForSecondHeartbeat;
-}
 
 int Client::getID() const
 {
@@ -31,16 +14,6 @@ int Client::getID() const
 sf::TcpSocket & Client::getTCPSocket()
 {
 	return m_tcpSocket;
-}
-
-void Client::waitForHeartbeat()
-{
-	m_waitingForHearbeat = true;
-}
-
-void Client::waitForSecondHeartBeat()
-{
-	m_waitingForSecondHeartbeat = true;
 }
 
 void Client::listen()
@@ -53,27 +26,22 @@ void Client::listen()
 		{
 			continue;
 		}
-
 		int packetType = 0;
 		int clientID = 0;
-		sf::Vector2f position;
+		sf::Vector2i position;
+		std::string name;
 		packet >> packetType >> clientID;
 		switch (static_cast<PacketType>(packetType))
 		{
 		case PacketType::Disconnect:
-			m_mutex.lock();
-			m_serverQueue.emplace_back(clientID, static_cast<PacketType>(packetType));
-			m_mutex.unlock();
+			m_connected = false;
+			m_messenger.addMessage(ServerMessage(static_cast<PacketType>(packetType), clientID));
 			break;
-		case PacketType::PlayerPosition:
-			m_mutex.lock();
-			packet >> packetType >> clientID >> position.x >> position.y;
-			m_serverQueue.emplace_back(clientID, static_cast<PacketType>(packetType), position);
-			m_mutex.unlock();
-			break;
-		case PacketType::HeartBeat:
-			m_waitingForHearbeat = false;
-			m_waitingForSecondHeartbeat = false;
+		case PacketType::Connect :
+			packet >> packetType >> clientID >> name;
+			m_ID = clientID;
+			m_name = name;
+			m_messenger.addMessage(ServerMessage(static_cast<PacketType>(packetType), clientID));
 			break;
 		}
 	}

@@ -27,6 +27,9 @@
     <ClCompile Include="src\GameData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Messenger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Server.h">
@@ -38,13 +41,13 @@
     <ClInclude Include="src\Entity.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\ServerMessage.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\LevelDetails.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\GameData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Messenger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

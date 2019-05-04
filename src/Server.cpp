@@ -9,7 +9,7 @@ Server::Server(const sf::IpAddress& ipAddress, unsigned short portNumber)
 	: m_ipAddress(ipAddress),
 	m_portNumber(portNumber),
 	m_totalClientsAllowed(TOTAL_CLIENTS_ALLOWED),
-	m_messageQueue(),
+	m_messenger(),
 	m_clientThreads(),
 	m_listenThread(),
 	m_listenThreadMutex(),
@@ -105,12 +105,14 @@ void Server::disconnectClient(int clientID)
 
 void Server::broadcastUDPMessage(sf::Packet& packet)
 {
-	//Inform all clients of client disconnection
-	/*sf::Packet packet;
-	packet << static_cast<int>(PacketType::Disconnect) << clientID;*/
-	if (m_udpSocket.send(packet, m_ipAddress, m_portNumber) == sf::Socket::Done)
+	m_udpSocket.send(packet, m_ipAddress, m_portNumber);
+}
+
+void Server::broadcastTCPMessage(sf::Packet& packet)
+{
+	for (auto& client : m_clients)
 	{
-		std::cout << "Client disconnected from server.\n";
+		client->getTCPSocket().send(packet);
 	}
 }
 
@@ -134,17 +136,17 @@ void Server::addClient()
 		//m_socketSelector.add(*socket); 
 		//m_listenThreadMutex.unlock();
 
-		if (!sendLatestGameDataToClient(*socket))
-		{
-			delete socket;
-			std::cout << "Client Added unsuccesfully\n";
-			return;
-		}
+		//if (!sendLatestGameDataToClient(*socket))
+		//{
+		//	delete socket;
+		//	std::cout << "Client Added unsuccesfully\n";
+		//	return;
+		//}
 
-		m_listenThreadMutex.lock();
-		Client* client = new Client(m_messageQueue, m_socketSelector, *socket, m_ipAddress, m_portNumber);
+		std::unique_lock<std::mutex> lock{ m_listenThreadMutex };
+		//Client(Messenger& messenger, sf::TcpSocket& tcpSocket, std::string&& name);
+		Client* client = new Client(m_messenger, *socket);
 		m_clients.push_back(client);
-		m_listenThreadMutex.unlock();
 		std::cout << "New Client Added\n";
 	}
 	else
@@ -183,31 +185,33 @@ int Server::getNumberOfClients() const
 
 void Server::handleMessageQueue()
 {
-	if (m_messageQueue.empty())
+	while (!m_messenger.isEmpty())
 	{
-		return;
-	}
-
-	for (const auto& message : m_messageQueue)
-	{
-		switch (message.m_packetType)
+		ServerMessage serverMessage = m_messenger.getMessage();
+		sf::Packet packet;
+		switch (serverMessage.m_packetType)
 		{
-		case PacketType::Disconnect:
-			disconnectClient(message.m_clientID);
+		case PacketType::Connect :
+			packet << static_cast<int>(serverMessage.m_packetType) << serverMessage.m_clientID << serverMessage.m_name;
 			break;
-
-		case PacketType::PlayerPosition:
-			updatePlayerPosition(message.m_clientID, message.m_position);
+		case PacketType::Disconnect :
+			packet << static_cast<int>(serverMessage.m_packetType) << serverMessage.m_clientID;
 			break;
 		}
 	}
 
-	m_messageQueue.clear();
-}
-
-void Server::addServerMessage(const ServerMessage & serverMessage)
-{
-	m_messageQueue.push_back(serverMessage);
+	//for (const auto& message : m_messageQueue)
+	//{
+	//	switch (message.m_packetType)
+	//	{
+	//	case PacketType::Disconnect:
+	//		disconnectClient(message.m_clientID);
+	//		break;
+	//	case PacketType::PlayerPosition:
+	//		updatePlayerPosition(message.m_clientID, message.m_position);
+	//		break;
+	//	}
+	//}
 }
 
 //struct GameData

@@ -131,18 +131,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Messenger.cpp" />
     <ClCompile Include="src\GameData.cpp" />
     <ClCompile Include="src\Client.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Server.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Messenger.h" />
     <ClInclude Include="src\GameData.h" />
     <ClInclude Include="src\Client.h" />
     <ClInclude Include="src\Entity.h" />
     <ClInclude Include="src\LevelDetails.h" />
     <ClInclude Include="src\Server.h" />
-    <ClInclude Include="src\ServerMessage.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

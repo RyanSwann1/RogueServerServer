@@ -2,7 +2,7 @@
 
 #include "Level/Level.h"
 #include "SFML/Network.hpp"
-#include "ServerMessage.h"
+#include "Messenger.h"
 #include "GameData.h"
 #include <deque>
 #include <list>
@@ -29,7 +29,7 @@ private:
 	const sf::IpAddress m_ipAddress;
 	const unsigned short m_portNumber;
 	const int m_totalClientsAllowed;
-	std::deque<ServerMessage> m_messageQueue;
+	Messenger m_messenger;
 	std::list<std::pair<int, std::thread>> m_clientThreads;
 	std::thread m_listenThread;
 	std::mutex m_listenThreadMutex;
@@ -38,10 +38,11 @@ private:
 	sf::TcpListener m_tcpListener;
 	sf::SocketSelector m_socketSelector;
 	bool m_running;
-	GameData m_latestGameData;
+
 
 	void disconnectClient(int clientID);
 	void broadcastUDPMessage(sf::Packet& packet);
+	void broadcastTCPMessage(sf::Packet& packet);
 	void addClient();
 	void listen();
 	void updatePlayerPosition(int clientID, sf::Vector2f newPosition);
